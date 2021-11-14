@@ -1,0 +1,57 @@
+<resources>
+    <string name="app_name">Files</string>
+    <string name="DescMkdir">Create New Directory</string>
+    <string name="FSize">Size</string>
+    <string name="MDate">Last Modified Date</string>
+    <string name="MType">MIME-Type</string>
+    <string name="NewDir">New</string>
+    <string name="delete">Delete</string>
+    <string name="dwn">Downloads</string>
+    <string name="eDir">No Files</string>
+    <string name="file_icon_preview">File Icon Preview</string>
+    <string name="file_info">File Info</string>
+    <string name="ins">Internal Storage</string>
+    <string name="key1">Type here…</string>
+    <string name="key2">Send</string>
+    <string name="play">You don\'t seem to have an app that can open this file. Try searching Google Play for one that can.</string>
+    <string name="prefs">Settings</string>
+    <string name="prefs_ctg_gen">General</string>
+    <string name="prefs_gen_a">Show hidden files</string>
+    <string name="rename">Rename</string>
+    <string name="search_is">Search InternalStorage</string>
+    <string name="share">Share</string>
+    <string name="stat">Info</string>
+    <string name="unk">Unknown</string>
+    <string name="file_options">File Options</string>
+    <string name="file_name">Name</string>
+    <string name="images">Images</string>
+    <string name="audio">Audio</string>
+    <string name="video">Video</string>
+    <string name="documents">Documents</string>
+    <string name="favourites">Favourites</string>
+    <string name="recent">Recent</string>
+    <string name="archives">Archives</string>
+    <string name="encrypted">Secure Folder</string>
+    <string name="ellipse">…</string>
+    <string name="storage_analyzer">Storage Analyzer</string>
+    <string name="trash">Trash</string>
+    <string name="file_path">File Path</string>
+    <string name="calculating">Calculating…</string>
+    <string name="rename_err">Unable to Rename</string>
+    <string name="renamed_holder">%s renamed to %s</string>
+    <string name="del_progress">Deleting files…</string>
+    <string name="progress_paste">Pasting files…</string>
+    <string name="extract">Extract</string>
+
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="title_activity_licenses">LicensesActivity</string>
+
+    <plurals name="items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <plurals name="d_items">
+        <item quantity="one">%d directory, %d file, %s</item>
+        <item quantity="other">%d directories, %d files, %s</item>
+    </plurals>
+</resources>
