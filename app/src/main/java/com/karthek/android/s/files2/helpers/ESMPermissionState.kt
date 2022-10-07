@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.karthek.android.s.files2.BuildConfig
 
 class ESMPermissionState(private val context: Context, private val activity: Activity) {
     private var _hasPermission by mutableStateOf(checkPermission(context))
@@ -42,7 +43,7 @@ class ESMPermissionState(private val context: Context, private val activity: Act
             context.startActivity(
                 Intent(
                     Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                    Uri.parse("package:com.karthek.android.s.files2")
+                    Uri.parse("package:${BuildConfig.APPLICATION_ID}")
                 )
             )
         } else {
