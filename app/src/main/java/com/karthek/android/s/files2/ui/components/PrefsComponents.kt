@@ -4,12 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Switch
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,8 +47,8 @@ fun PrefsBottomSheet(viewModel: FileListViewModel) {
 fun PrefsItemHeader(text: String) {
     Text(
         text = text,
-        color = MaterialTheme.colors.primary,
-        style = MaterialTheme.typography.caption,
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.bodySmall,
         modifier = Modifier.padding(8.dp)
     )
 }
@@ -56,7 +56,7 @@ fun PrefsItemHeader(text: String) {
 @Composable
 fun SortItem(text: String, index: Int, viewModel: FileListViewModel) {
     val selected = viewModel.sortPreference == index
-    val color = if (selected) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface
+    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     PrefsItem(
         text = text,
         color = color,
@@ -71,7 +71,7 @@ fun SortItem(text: String, index: Int, viewModel: FileListViewModel) {
 fun PrefsItem(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colors.onSurface,
+    color: Color = MaterialTheme.colorScheme.onSurface,
     content: @Composable () -> Unit
 ) {
     Row(modifier = modifier.padding(14.dp)) {
@@ -79,7 +79,7 @@ fun PrefsItem(
             text = text,
             color = color,
             fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.subtitle1,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
         content()

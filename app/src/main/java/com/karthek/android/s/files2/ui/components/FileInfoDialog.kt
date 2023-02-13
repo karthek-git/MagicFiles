@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -61,8 +61,8 @@ fun FileInfoDialog(sFile: SFile, fileType: FileType,onDismissRequest: () -> Unit
 fun FileInfoHeaderItem(text: String) {
     Text(
         text = text,
-        color = MaterialTheme.colors.onSurface,
-        style = MaterialTheme.typography.h6,
+        color = MaterialTheme.colorScheme.onSurface,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 16.dp)
     )
 }
@@ -71,7 +71,7 @@ fun FileInfoHeaderItem(text: String) {
 fun FileInfoItem(text: String) {
     Text(
         text = text,
-        color = MaterialTheme.colors.onSurface.copy(0.75f),
+        color = MaterialTheme.colorScheme.onSurface.copy(0.75f),
         modifier = Modifier.padding(bottom = 8.dp, start = 17.dp, end = 16.dp)
     )
 }

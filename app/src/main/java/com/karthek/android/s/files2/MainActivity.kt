@@ -13,7 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
@@ -31,6 +31,7 @@ import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.providers.FileProvider.Companion.MIME_TYPE_KEY
 import com.karthek.android.s.files2.ui.screens.FileListScreen
 import com.karthek.android.s.files2.ui.screens.Perms
+import com.karthek.android.s.files2.ui.theme.AppTheme
 import com.karthek.android.s.files2.ui.theme.FilesTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -58,25 +59,27 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun ActivityContent() {
-        FilesTheme {
-            val systemUiController = rememberSystemUiController()
-            val useDarkIcons = MaterialTheme.colors.isLight
-            SideEffect {
-                systemUiController.setSystemBarsColor(Color.Transparent, useDarkIcons)
-            }
-            ProvideWindowInsets {
-                Surface(color = MaterialTheme.colors.background) {
-                    Perms(navigateToSettingsScreen = {
-                        startActivity(
-                            Intent(
-                                ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.parse("package:com.karthek.android.s.files2")
+        AppTheme {
+            FilesTheme {
+                val systemUiController = rememberSystemUiController()
+                val useDarkIcons = MaterialTheme.colors.isLight
+                SideEffect {
+                    systemUiController.setSystemBarsColor(Color.Transparent, useDarkIcons)
+                }
+                ProvideWindowInsets {
+                    Surface(color = MaterialTheme.colors.background) {
+                        Perms(navigateToSettingsScreen = {
+                            startActivity(
+                                Intent(
+                                    ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.parse("package:${BuildConfig.APPLICATION_ID}")
+                                )
                             )
-                        )
-                    }) {
-                        FileListScreen(
-                            handleFile = ::handleFile,
-                        )
+                        }) {
+                            FileListScreen(
+                                handleFile = ::handleFile,
+                            )
+                        }
                     }
                 }
             }
@@ -85,15 +88,15 @@ class MainActivity : ComponentActivity() {
 
     private fun handleFile(sFile: SFile) {
         val intent = Intent(Intent.ACTION_VIEW)
-            val mimeType = sFile.toMimeType(fileType)
-            val uri = FileProvider.getUriForFile(
-                this,
-                "com.karthek.android.s.files2.fileprovider",
-                sFile.file
-            ).buildUpon().appendQueryParameter(MIME_TYPE_KEY, mimeType).build()
-            intent.setDataAndType(uri, mimeType)
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            startActivity(intent)
+        val mimeType = sFile.toMimeType(fileType)
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${BuildConfig.APPLICATION_ID}.fileprovider",
+            sFile.file
+        ).buildUpon().appendQueryParameter(MIME_TYPE_KEY, mimeType).build()
+        intent.setDataAndType(uri, mimeType)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(intent)
     }
 
 }

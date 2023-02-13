@@ -1,6 +1,6 @@
 package com.karthek.android.s.files2.ui.components
 
-import androidx.compose.material.AlertDialog
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 
 @Composable

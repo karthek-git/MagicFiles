@@ -4,14 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.text.format.Formatter
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +43,7 @@ fun ActionItem(imageVector: ImageVector, contentDescription: String, onClick: ()
         Icon(
             imageVector = imageVector,
             contentDescription = contentDescription,
-            tint = MaterialTheme.colors.onSurface,
-            modifier = Modifier.padding(12.dp)
+            tint = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -68,7 +68,7 @@ fun FileViewItem(
         Formatter.formatFileSize(LocalContext.current, sFile.size)
     }
     val bgColor =
-        if (selected) MaterialTheme.colors.primary.copy(0.33f) else Color.Transparent
+        if (selected) MaterialTheme.colorScheme.primary.copy(0.33f) else Color.Transparent
     Row(
         modifier = Modifier
             .background(bgColor)
@@ -106,7 +106,7 @@ fun FileViewItem(
         ) {
             Text(
                 text = sFile.file.name,
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 8.dp)
@@ -116,7 +116,7 @@ fun FileViewItem(
                 modifier = Modifier
                     .alpha(0.7f)
                     .padding(start = 8.dp, top = 4.dp),
-                style = MaterialTheme.typography.caption,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -185,19 +185,19 @@ private fun Context.share(sFile: SFile) {
 }
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpsItem(icon: ImageVector, text: String, onClick: () -> Unit = {}) {
     ListItem(
-        icon = { Icon(icon, contentDescription = text) },
-        text = { Text(text, fontWeight = FontWeight.SemiBold) },
+        leadingContent = { Icon(icon, contentDescription = text) },
+        headlineText = { Text(text, fontWeight = FontWeight.SemiBold) },
         modifier = Modifier.clickable(onClick = onClick)
     )
 }
 
 @Composable
 fun Title(title: @Composable () -> Unit) {
-    ProvideTextStyle(value = MaterialTheme.typography.h6) {
+    ProvideTextStyle(value = MaterialTheme.typography.titleMedium) {
         CompositionLocalProvider(
             LocalContentAlpha provides ContentAlpha.high,
             content = title
@@ -217,9 +217,9 @@ fun Dialog(
         Column(
             modifier = modifier
                 .background(
-                    color = MaterialTheme.colors.surface
+                    color = MaterialTheme.colorScheme.surface
                         .copy(0.88f)
-                        .compositeOver(MaterialTheme.colors.onSurface),
+                        .compositeOver(MaterialTheme.colorScheme.onSurface),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .padding(horizontal = 2.dp)
@@ -241,7 +241,6 @@ fun Dialog(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AddFab(showPaste: Boolean, onPasteClick: () -> Unit, onClick: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()

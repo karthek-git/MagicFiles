@@ -2,14 +2,16 @@ package com.karthek.android.s.files2.ui.screens
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.Icon
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +22,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,16 +50,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
-import com.google.accompanist.insets.ui.TopAppBar
 import com.karthek.android.s.files2.FileOpsHandler
 import com.karthek.android.s.files2.SettingsActivity
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.state.FileListViewModel
 import com.karthek.android.s.files2.ui.components.*
 import kotlinx.coroutines.launch
+import org.w3c.dom.Text
 import java.io.IOException
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun FileListScreen(
     viewModel: FileListViewModel = viewModel(),
@@ -136,6 +147,7 @@ fun FileListScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
+                    //Crumb()
                     FileListView(
                         viewModel = viewModel,
                         bottomSheetCallback = {
@@ -160,9 +172,10 @@ fun FileListScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(onSearchClick: () -> Unit, sortCallback: () -> Unit) {
-    TopAppBar(
+    androidx.compose.material3.TopAppBar(
         title = {
             Text(
                 text = "Files",
@@ -170,9 +183,6 @@ fun TopAppBar(onSearchClick: () -> Unit, sortCallback: () -> Unit) {
                 overflow = TextOverflow.Ellipsis
             )
         },
-        contentPadding = rememberInsetsPaddingValues(insets = LocalWindowInsets.current.statusBars),
-        backgroundColor = MaterialTheme.colors.surface,
-        elevation = 8.dp,
         actions = {
             ActionItem(
                 imageVector = Icons.Outlined.Search,
@@ -195,6 +205,7 @@ fun TopAppBar(onSearchClick: () -> Unit, sortCallback: () -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Searchbar(viewModel: FileListViewModel) {
     val textInputService = LocalTextInputService.current
@@ -213,18 +224,15 @@ fun Searchbar(viewModel: FileListViewModel) {
                 singleLine = true,
                 placeholder = { Text(text = "Search") },
                 colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = Color.Transparent,
+                    containerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
                 ),
-                textStyle = MaterialTheme.typography.body1,
+                textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxWidth()
             )
         },
-        contentPadding = rememberInsetsPaddingValues(insets = LocalWindowInsets.current.statusBars),
-        backgroundColor = MaterialTheme.colors.surface,
-        elevation = 8.dp,
         navigationIcon = {
             IconButton(
                 onClick = {
@@ -236,9 +244,7 @@ fun Searchbar(viewModel: FileListViewModel) {
             ) {
                 Icon(
                     imageVector = Icons.Outlined.ArrowBack,
-                    contentDescription = "",
-                    modifier = Modifier.padding(start = 16.dp, end = 8.dp),
-                    tint = MaterialTheme.colors.onSurface
+                    contentDescription = ""
                 )
             }
         },
@@ -248,9 +254,7 @@ fun Searchbar(viewModel: FileListViewModel) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
                         contentDescription = "",
-                        tint = MaterialTheme.colors.onSurface,
-                        modifier = Modifier
-                            .padding(start = 8.dp, end = 16.dp)
+                        tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
@@ -259,6 +263,7 @@ fun Searchbar(viewModel: FileListViewModel) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopActionBar(num: Int, callback: () -> Unit) {
     TopAppBar(
@@ -269,15 +274,11 @@ fun TopActionBar(num: Int, callback: () -> Unit) {
                 overflow = TextOverflow.Ellipsis
             )
         },
-        contentPadding = rememberInsetsPaddingValues(insets = LocalWindowInsets.current.statusBars),
-        backgroundColor = MaterialTheme.colors.surface,
-        elevation = 8.dp,
         navigationIcon = {
             IconButton(onClick = callback) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "",
-                    modifier = Modifier.padding(start = 16.dp)
+                    contentDescription = ""
                 )
             }
         }
@@ -288,7 +289,7 @@ fun TopActionBar(num: Int, callback: () -> Unit) {
 fun ActionToolbar(fileOpsHandler: FileOpsHandler, modifier: Modifier) {
     Card(
         shape = RoundedCornerShape(14.dp),
-        elevation = 16.dp,
+        elevation = CardDefaults.cardElevation(16.dp),
         modifier = modifier.padding(horizontal = 16.dp, vertical = 32.dp)
     ) {
         Row(horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -312,7 +313,7 @@ fun ToolbarItem(imageVector: ImageVector, title: String, onClick: () -> Unit) {
             contentDescription = title,
             modifier = Modifier.padding(bottom = 4.dp)
         )
-        Text(text = title, style = MaterialTheme.typography.button)
+        Text(text = title, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -323,10 +324,10 @@ fun ModalBottomSheetLayout(
     sheetContent: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val scrimColor = if (MaterialTheme.colors.isLight) {
-        MaterialTheme.colors.onSurface.copy(alpha = 0.32f)
+    val scrimColor = if (!isSystemInDarkTheme()) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
     } else {
-        MaterialTheme.colors.surface.copy(alpha = 0.5f)
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
     }
     ModalBottomSheetLayout(
         sheetState = sheetState,
@@ -380,7 +381,6 @@ fun FileListView(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun FileListViewContent(
     fileList: List<SFile>,
@@ -449,6 +449,7 @@ fun FileListViewContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateDirectory(
     title: String,
@@ -503,8 +504,8 @@ fun CreateDirectory(
             if (message.isNotEmpty()) {
                 Text(
                     text = message,
-                    color = MaterialTheme.colors.error,
-                    style = MaterialTheme.typography.caption
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
