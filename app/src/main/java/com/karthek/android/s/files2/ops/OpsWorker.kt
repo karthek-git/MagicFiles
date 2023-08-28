@@ -51,6 +51,7 @@ abstract class OpsWorker(context: Context, workerParameters: WorkerParameters) :
         return ForegroundInfo(notificationId, notification)
     }
 
+    // TODO: handle notification runtime permission
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val channel =
