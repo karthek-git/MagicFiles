@@ -31,6 +31,7 @@ import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
 import coil.transform.RoundedCornersTransformation
 import com.google.accompanist.insets.navigationBarsPadding
+import com.karthek.android.s.files2.BuildConfig
 import com.karthek.android.s.files2.FileOpsHandler
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.state.FileListViewModel
@@ -158,6 +159,14 @@ fun OpsBottomSheet(
         }
         if (viewModel.selectedFile?.isDir != true) {
             val context = LocalContext.current
+            OpsItem(icon = Icons.Outlined.OpenWith, text = "Open with") {
+                viewModel.selectedFile?.let { context.opw(it, it.mimeType) }
+                onOptionSelect()
+            }
+            OpsItem(icon = Icons.Outlined.OpenInNew, text = "Open as") {
+                viewModel.selectedFile?.let { context.opw(it, "*/*") }
+                onOptionSelect()
+            }
             OpsItem(icon = Icons.Outlined.Share, text = "Share") {
                 viewModel.selectedFile?.let { context.share(it) }
                 onOptionSelect()
@@ -168,6 +177,18 @@ fun OpsBottomSheet(
             fileOpsHandler.info()
         }
     }
+}
+
+private fun Context.opw(sFile: SFile, mimeType: String?) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.setDataAndTypeAndNormalize(
+        FileProvider.getUriForFile(this,
+            "${BuildConfig.APPLICATION_ID}.fileprovider",
+            sFile.file),
+        mimeType
+    )
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    startActivity(Intent.createChooser(intent, sFile.file.name))
 }
 
 private fun Context.share(sFile: SFile) {
