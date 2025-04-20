@@ -13,7 +13,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -28,7 +31,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
 import androidx.compose.material.icons.outlined.FileCopy
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.OpenWith
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.FloatingActionButton
@@ -50,8 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
@@ -88,9 +92,10 @@ fun FileViewItem(
     bottomSheetCallback: (SFile) -> Unit
 ) {
     val painter = rememberAsyncImagePainter(
-        ImageRequest.Builder(LocalContext.current).data(data = sFile).apply(block = fun ImageRequest.Builder.() {
-            transformations(RoundedCornersTransformation(8f))
-        }).build()
+        ImageRequest.Builder(LocalContext.current).data(data = sFile)
+            .apply(block = fun ImageRequest.Builder.() {
+                transformations(RoundedCornersTransformation(8f))
+            }).build()
     )
     val size = if (sFile.isDir) {
         val context = LocalContext.current
@@ -103,7 +108,9 @@ fun FileViewItem(
     Row(
         modifier = Modifier
             .background(bgColor)
-            .combinedClickable(onLongClick = { onLongClick(sFile) }, onClick = { onClick(sFile) })
+            .combinedClickable(
+                onLongClick = { bottomSheetCallback(sFile) },
+                onClick = { onClick(sFile) })
             .padding(10.dp)
     ) {
         //var checked by app.isSelected
@@ -112,6 +119,7 @@ fun FileViewItem(
                 .padding(horizontal = 8.dp)
                 .size(36.dp)
                 .align(Alignment.CenterVertically)
+                .clickable { onLongClick(sFile) }
         ) {
             if (painter.state !is AsyncImagePainter.State.Success) {
                 Icon(
@@ -152,15 +160,15 @@ fun FileViewItem(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        IconButton(
-            onClick = { bottomSheetCallback(sFile) },
-            modifier = Modifier.align(Alignment.CenterVertically)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.MoreVert,
-                contentDescription = ""
-            )
-        }
+//        IconButton(
+//            onClick = { bottomSheetCallback(sFile) },
+//            modifier = Modifier.align(Alignment.CenterVertically)
+//        ) {
+//            Icon(
+//                imageVector = Icons.Outlined.MoreVert,
+//                contentDescription = ""
+//            )
+//        }
     }
 }
 
@@ -212,9 +220,11 @@ fun OpsBottomSheet(
 private fun Context.opw(sFile: SFile, mimeType: String?) {
     val intent = Intent(Intent.ACTION_VIEW)
     intent.setDataAndTypeAndNormalize(
-        FileProvider.getUriForFile(this,
+        FileProvider.getUriForFile(
+            this,
             "${BuildConfig.APPLICATION_ID}.fileprovider",
-            sFile.file),
+            sFile.file
+        ),
         mimeType
     )
     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -320,3 +330,16 @@ fun AddFab(showPaste: Boolean, onPasteClick: () -> Unit, onClick: () -> Unit) {
         }
     }
 }
+
+@Composable
+fun PaddingValues.add(
+    start: Dp = 0.dp,
+    top: Dp = 0.dp,
+    end: Dp = 0.dp,
+    bottom: Dp = 0.dp
+) = PaddingValues(
+    start = start + calculateStartPadding(LocalLayoutDirection.current),
+    top = top + calculateTopPadding(),
+    end = end + calculateEndPadding(LocalLayoutDirection.current),
+    bottom = bottom + calculateBottomPadding()
+)

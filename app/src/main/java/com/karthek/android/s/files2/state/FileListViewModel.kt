@@ -8,6 +8,7 @@ import android.os.FileObserver
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -51,7 +52,7 @@ class FileListViewModel @Inject constructor(
     FileOpsHandler {
     var cwd: File = Environment.getExternalStorageDirectory()
     var selectedFile: SFile? by mutableStateOf(null)
-    var nest by mutableStateOf(0)
+    var nest by mutableIntStateOf(0)
     val fileList = mutableStateListOf<SFile>()
     var loading by mutableStateOf(true)
     var selectedFileList = mutableStateListOf<String>()
@@ -61,7 +62,7 @@ class FileListViewModel @Inject constructor(
     var curState: IntArray? = null
     private var loadJob: Job? = null
     var showHidden by mutableStateOf(false)
-    var sortPreference by mutableStateOf(1)
+    var sortPreference by mutableIntStateOf(1)
     var showEditDialog by mutableStateOf(false)
     var showRenameDialog by mutableStateOf(false)
     var showInfoDialog by mutableStateOf(false)

@@ -12,8 +12,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +37,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FileCopy
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -88,6 +91,7 @@ import com.karthek.android.s.files2.ui.components.FileViewItem
 import com.karthek.android.s.files2.ui.components.FindAppDialog
 import com.karthek.android.s.files2.ui.components.OpsBottomSheet
 import com.karthek.android.s.files2.ui.components.PrefsBottomSheet
+import com.karthek.android.s.files2.ui.components.add
 import com.karthek.android.s.files2.ui.components.findOnGooglePlay
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -160,24 +164,43 @@ fun FileListScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val pathScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         topBar = {
-            when {
-                inActionMode -> {
-                    TopActionBar(viewModel.selectedFileList.size) { viewModel.clearActionMode() }
-                }
+            Column {
+                when {
+                    inActionMode -> {
+                        TopActionBar(viewModel.selectedFileList.size) { viewModel.clearActionMode() }
+                    }
 
-                viewModel.inSearchMode -> {
-                    Searchbar(viewModel = viewModel)
-                }
+                    viewModel.inSearchMode -> {
+                        Searchbar(viewModel = viewModel)
+                    }
 
-                else -> {
-                    TopAppBar(
-                        onSearchClick = { viewModel.inSearchMode = true },
-                        sortCallback = { openPrefsSheet = true },
-                        scrollBehavior = scrollBehavior
-                    )
+                    else -> {
+                        TopAppBar(
+                            onSearchClick = { viewModel.inSearchMode = true },
+                            sortCallback = { openPrefsSheet = true },
+                            scrollBehavior = scrollBehavior
+                        )
+                    }
                 }
+                TopAppBar(
+                    title = {
+                        Crumb(path = viewModel.cwd)
+                    },
+                    navigationIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Storage,
+                            contentDescription = "",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp, end = 4.dp)
+                        )
+                    },
+                    windowInsets = WindowInsets(0, 0, 0, 0),
+                    scrollBehavior = pathScrollBehavior,
+                    modifier = Modifier.height(48.dp).padding(start = 8.dp)
+                )
             }
         },
         floatingActionButton = {
@@ -188,32 +211,30 @@ fun FileListScreen(
                 ) { viewModel.showEditDialog = true }
             }
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        modifier = Modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+            .nestedScroll(pathScrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            Column {
-                Crumb(
-                    path = viewModel.cwd,
-                    paddingValues = paddingValues)
-                FileListView(
-                    viewModel = viewModel,
-                    bottomSheetCallback = {
-                        scope.launch {
-                            viewModel.selectedFile = it
-                            openOpsSheet = true
-                        }
-                    },
-                    handleFile = {
-                        try {
-                            handleFile(it)
-                        } catch (e: ActivityNotFoundException) {
-                            viewModel.showFindAppDialog = it.mimeType
-                        }
-                    },
-                )
-            }
+            FileListView(
+                viewModel = viewModel,
+                bottomSheetCallback = {
+                    scope.launch {
+                        viewModel.selectedFile = it
+                        openOpsSheet = true
+                    }
+                },
+                paddingValues = paddingValues,
+                handleFile = {
+                    try {
+                        handleFile(it)
+                    } catch (e: ActivityNotFoundException) {
+                        viewModel.showFindAppDialog = it.mimeType
+                    }
+                },
+            )
             if (inActionMode)
                 ActionToolbar(
                     viewModel,
@@ -230,6 +251,7 @@ fun TopAppBar(
     sortCallback: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
+
     TopAppBar(
         title = {
             Text(
@@ -377,6 +399,7 @@ fun ToolbarItem(imageVector: ImageVector, title: String, onClick: () -> Unit) {
 @Composable
 fun FileListView(
     viewModel: FileListViewModel,
+    paddingValues: PaddingValues,
     bottomSheetCallback: (SFile) -> Unit,
     handleFile: (SFile) -> Unit,
 ) {
@@ -393,6 +416,7 @@ fun FileListView(
         FileListViewContent(
             fileList = fileList,
             selectedFileList = viewModel.selectedFileList,
+            paddingValues = paddingValues,
             bottomSheetCallback = bottomSheetCallback,
             curState = viewModel.curState,
             onClick = { sFile, selected, index, offset ->
@@ -420,6 +444,7 @@ fun FileListView(
 fun FileListViewContent(
     fileList: List<SFile>,
     selectedFileList: List<String>,
+    paddingValues: PaddingValues,
     bottomSheetCallback: (SFile) -> Unit,
     curState: IntArray?,
     onClick: (SFile, Boolean, Int, Int) -> Unit,
@@ -443,6 +468,7 @@ fun FileListViewContent(
     ) {
         LazyColumn(
             state = lazyListState,
+            contentPadding = paddingValues.add(bottom = 64.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             //item { ListHeader(showSystem, onShowSystem) }

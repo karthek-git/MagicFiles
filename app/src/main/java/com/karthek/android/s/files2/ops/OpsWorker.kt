@@ -36,7 +36,7 @@ abstract class OpsWorker(context: Context, workerParameters: WorkerParameters) :
         }
 
         val notification = NotificationCompat.Builder(applicationContext, "sme")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_stat_default)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(text)

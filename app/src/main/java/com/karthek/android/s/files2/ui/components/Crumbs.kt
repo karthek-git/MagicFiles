@@ -1,6 +1,5 @@
 package com.karthek.android.s.files2.ui.components
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -22,7 +21,6 @@ import java.io.File
 @Composable
 fun Crumb(
     path: File,
-    paddingValues: PaddingValues
 ) {
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
@@ -30,14 +28,18 @@ fun Crumb(
     val pathList = path.path.split("/")
     LazyRow(
         state = lazyListState,
-        contentPadding = paddingValues,
-        modifier = Modifier.padding(top = 12.dp, end = 8.dp)
+        modifier = Modifier.padding(top = 12.dp, bottom = 8.dp, end = 4.dp),
     ) {
-        item { CrumbItem(dirName = "Internal Storage") {} }
+        item {
+            Text(text = "Internal Storage",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 2.dp)
+            )
+        }
         if (pathList.size > 4) {
             items(pathList.size - 4) { i ->
                 CrumbItem(dirName = pathList[i + 4]) {
-
                 }
             }
             item { Spacer(modifier = Modifier.size(height = 4.dp, width = 64.dp)) }
@@ -56,13 +58,13 @@ fun CrumbItem(dirName: String, callback: () -> Unit) {
             contentDescription = "",
             tint = MaterialTheme.colorScheme.primary
         )
-       // TextButton(onClick = callback, contentPadding = PaddingValues(0.dp)) {
-            Text(
-                text = dirName,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(0.dp)
-            )
+        // TextButton(onClick = callback, contentPadding = PaddingValues(0.dp)) {
+        Text(
+            text = dirName,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(0.dp)
+        )
         //}
     }
 }

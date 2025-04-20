@@ -28,6 +28,7 @@ import coil.ImageLoader
 import com.karthek.android.s.files2.helpers.FileIconFetcher
 import com.karthek.android.s.files2.helpers.FileType
 import com.karthek.android.s.files2.helpers.SFile
+import com.karthek.android.s.files2.helpers.SFileIconKeyer
 import com.karthek.android.s.files2.providers.FileProvider.Companion.MIME_TYPE_KEY
 import com.karthek.android.s.files2.ui.screens.FileListScreen
 import com.karthek.android.s.files2.ui.screens.Perms
@@ -48,7 +49,8 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         Coil.setImageLoader {
             ImageLoader.Builder(this)
-                .components(fun ComponentRegistry.Builder.() {
+                .components({
+                    add(SFileIconKeyer())
                     add(FileIconFetcher.Factory(fileType))
                 })
                 .build()
@@ -106,7 +108,7 @@ suspend fun notification(context: Context, string: String) {
     val intent = Intent(context, MainActivity::class.java).apply {
 
     }
-    val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
+    val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     val builder = NotificationCompat.Builder(context, "sme")
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setContentTitle("Pasting")
