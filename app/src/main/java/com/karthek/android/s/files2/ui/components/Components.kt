@@ -5,15 +5,43 @@ import android.content.Intent
 import android.text.format.Formatter
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.material.icons.outlined.FileCopy
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.OpenWith
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -25,12 +53,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
-import coil.annotation.ExperimentalCoilApi
-import coil.compose.ImagePainter
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
-import com.google.accompanist.insets.navigationBarsPadding
 import com.karthek.android.s.files2.BuildConfig
 import com.karthek.android.s.files2.FileOpsHandler
 import com.karthek.android.s.files2.helpers.SFile
@@ -50,7 +78,7 @@ fun ActionItem(imageVector: ImageVector, contentDescription: String, onClick: ()
 }
 
 
-@OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FileViewItem(
     sFile: SFile,
@@ -59,9 +87,11 @@ fun FileViewItem(
     onLongClick: (SFile) -> Unit,
     bottomSheetCallback: (SFile) -> Unit
 ) {
-    val painter = rememberImagePainter(data = sFile, builder = {
-        transformations(RoundedCornersTransformation(8f))
-    })
+    val painter = rememberAsyncImagePainter(
+        ImageRequest.Builder(LocalContext.current).data(data = sFile).apply(block = fun ImageRequest.Builder.() {
+            transformations(RoundedCornersTransformation(8f))
+        }).build()
+    )
     val size = if (sFile.isDir) {
         val context = LocalContext.current
         remember { sFile.getDirFormattedSize(context) }.collectAsState(initial = "...").value
@@ -83,11 +113,11 @@ fun FileViewItem(
                 .size(36.dp)
                 .align(Alignment.CenterVertically)
         ) {
-            if (painter.state !is ImagePainter.State.Success) {
+            if (painter.state !is AsyncImagePainter.State.Success) {
                 Icon(
                     imageVector = sFile.res.icon,
                     contentDescription = "",
-                    tint = if (sFile.isDir) LocalContentColor.current.copy(LocalContentAlpha.current)
+                    tint = if (sFile.isDir) LocalContentColor.current
                     else sFile.res.tintColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -163,7 +193,7 @@ fun OpsBottomSheet(
                 viewModel.selectedFile?.let { context.opw(it, it.mimeType) }
                 onOptionSelect()
             }
-            OpsItem(icon = Icons.Outlined.OpenInNew, text = "Open as") {
+            OpsItem(icon = Icons.AutoMirrored.Outlined.OpenInNew, text = "Open as") {
                 viewModel.selectedFile?.let { context.opw(it, "*/*") }
                 onOptionSelect()
             }
@@ -206,24 +236,13 @@ private fun Context.share(sFile: SFile) {
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OpsItem(icon: ImageVector, text: String, onClick: () -> Unit = {}) {
     ListItem(
         leadingContent = { Icon(icon, contentDescription = text) },
-        headlineText = { Text(text, fontWeight = FontWeight.SemiBold) },
+        headlineContent = { Text(text, fontWeight = FontWeight.SemiBold) },
         modifier = Modifier.clickable(onClick = onClick)
     )
-}
-
-@Composable
-fun Title(title: @Composable () -> Unit) {
-    ProvideTextStyle(value = MaterialTheme.typography.titleMedium) {
-        CompositionLocalProvider(
-            LocalContentAlpha provides ContentAlpha.high,
-            content = title
-        )
-    }
 }
 
 @Composable
@@ -234,7 +253,7 @@ fun Dialog(
     dismissButton: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRequest) {
+    Dialog(onDismissRequest = onDismissRequest) {
         Column(
             modifier = modifier
                 .background(

@@ -2,8 +2,6 @@ package com.karthek.android.s.files2.ui.screens
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.Icon
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -11,31 +9,60 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Sort
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FileCopy
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.*
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -47,35 +74,43 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.karthek.android.s.files2.FileOpsHandler
+import com.karthek.android.s.files2.ModalBottomSheetLayout
 import com.karthek.android.s.files2.SettingsActivity
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.state.FileListViewModel
-import com.karthek.android.s.files2.ui.components.*
+import com.karthek.android.s.files2.ui.components.ActionItem
+import com.karthek.android.s.files2.ui.components.AddFab
+import com.karthek.android.s.files2.ui.components.Crumb
+import com.karthek.android.s.files2.ui.components.Dialog
+import com.karthek.android.s.files2.ui.components.FileInfoDialog
+import com.karthek.android.s.files2.ui.components.FileViewItem
+import com.karthek.android.s.files2.ui.components.FindAppDialog
+import com.karthek.android.s.files2.ui.components.OpsBottomSheet
+import com.karthek.android.s.files2.ui.components.PrefsBottomSheet
+import com.karthek.android.s.files2.ui.components.findOnGooglePlay
 import kotlinx.coroutines.launch
-import org.w3c.dom.Text
 import java.io.IOException
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileListScreen(
     viewModel: FileListViewModel = viewModel(),
     handleFile: (SFile) -> Unit,
 ) {
-    val prefsSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    val opsSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    var openPrefsSheet by rememberSaveable { mutableStateOf(false) }
+    val prefsSheetState = rememberModalBottomSheetState()
+
+    var openOpsSheet by rememberSaveable { mutableStateOf(false) }
+    val opsSheetState = rememberModalBottomSheetState()
+
     val scope = rememberCoroutineScope()
     val inActionMode = viewModel.selectedFileList.isNotEmpty()
 
     BackHandler(viewModel.nest > 0, viewModel::onBackClick)
-    BackHandler(prefsSheetState.isVisible || opsSheetState.isVisible) {
-        scope.launch {
-            prefsSheetState.hide()
-            opsSheetState.hide()
-        }
+    BackHandler(openPrefsSheet || openOpsSheet) {
+        openPrefsSheet = false
+        openOpsSheet = false
     }
     BackHandler(inActionMode) { viewModel.clearActionMode() }
 
@@ -105,77 +140,97 @@ fun FileListScreen(
         }
     }
 
-    ModalBottomSheetLayout(
-        sheetState = prefsSheetState,
-        sheetContent = { PrefsBottomSheet(viewModel) }) {
+    if (openPrefsSheet) {
         ModalBottomSheetLayout(
+            onDismissRequest = { openPrefsSheet = false },
+            sheetState = prefsSheetState,
+            sheetContent = { PrefsBottomSheet(viewModel) })
+    }
+
+    if (openOpsSheet) {
+        ModalBottomSheetLayout(
+            onDismissRequest = { openOpsSheet = false },
             sheetState = opsSheetState,
             sheetContent = {
                 OpsBottomSheet(
                     viewModel,
                     viewModel,
-                ) { scope.launch { opsSheetState.hide() } }
-            }) {
-            Scaffold(
-                topBar = {
-                    when {
-                        inActionMode -> {
-                            TopActionBar(viewModel.selectedFileList.size) { viewModel.clearActionMode() }
-                        }
-                        viewModel.inSearchMode -> {
-                            Searchbar(viewModel = viewModel)
-                        }
-                        else -> {
-                            TopAppBar(
-                                onSearchClick = { viewModel.inSearchMode = true },
-                                sortCallback = { scope.launch { prefsSheetState.show() } })
-                        }
-                    }
-                },
-                floatingActionButton = {
-                    if (!inActionMode && !viewModel.inSearchMode) {
-                        AddFab(
-                            showPaste = viewModel.clipBoard.isNotEmpty(),
-                            onPasteClick = viewModel::paste
-                        ) { viewModel.showEditDialog = true }
-                    }
-                },
-                modifier = Modifier.navigationBarsPadding(bottom = false)
-            ) { paddingValues ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    //Crumb()
-                    FileListView(
-                        viewModel = viewModel,
-                        bottomSheetCallback = {
-                            scope.launch {
-                                viewModel.selectedFile = it
-                                opsSheetState.show()
-                            }
-                        },
-                        handleFile = {
-                            try {
-                                handleFile(it)
-                            } catch (e: ActivityNotFoundException) {
-                                viewModel.showFindAppDialog = it.mimeType
-                            }
-                        },
+                ) { openOpsSheet = false }
+            })
+    }
+
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    Scaffold(
+        topBar = {
+            when {
+                inActionMode -> {
+                    TopActionBar(viewModel.selectedFileList.size) { viewModel.clearActionMode() }
+                }
+
+                viewModel.inSearchMode -> {
+                    Searchbar(viewModel = viewModel)
+                }
+
+                else -> {
+                    TopAppBar(
+                        onSearchClick = { viewModel.inSearchMode = true },
+                        sortCallback = { openPrefsSheet = true },
+                        scrollBehavior = scrollBehavior
                     )
-                    if (inActionMode)
-                        ActionToolbar(viewModel, modifier = Modifier.align(Alignment.BottomCenter))
                 }
             }
+        },
+        floatingActionButton = {
+            if (!inActionMode && !viewModel.inSearchMode) {
+                AddFab(
+                    showPaste = viewModel.clipBoard.isNotEmpty(),
+                    onPasteClick = viewModel::paste
+                ) { viewModel.showEditDialog = true }
+            }
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column {
+                Crumb(
+                    path = viewModel.cwd,
+                    paddingValues = paddingValues)
+                FileListView(
+                    viewModel = viewModel,
+                    bottomSheetCallback = {
+                        scope.launch {
+                            viewModel.selectedFile = it
+                            openOpsSheet = true
+                        }
+                    },
+                    handleFile = {
+                        try {
+                            handleFile(it)
+                        } catch (e: ActivityNotFoundException) {
+                            viewModel.showFindAppDialog = it.mimeType
+                        }
+                    },
+                )
+            }
+            if (inActionMode)
+                ActionToolbar(
+                    viewModel,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBar(onSearchClick: () -> Unit, sortCallback: () -> Unit) {
-    androidx.compose.material3.TopAppBar(
+fun TopAppBar(
+    onSearchClick: () -> Unit,
+    sortCallback: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior
+) {
+    TopAppBar(
         title = {
             Text(
                 text = "Files",
@@ -190,7 +245,7 @@ fun TopAppBar(onSearchClick: () -> Unit, sortCallback: () -> Unit) {
                 onClick = onSearchClick
             )
             ActionItem(
-                imageVector = Icons.Outlined.Sort,
+                imageVector = Icons.AutoMirrored.Outlined.Sort,
                 contentDescription = "",
                 onClick = sortCallback
             )
@@ -201,7 +256,8 @@ fun TopAppBar(onSearchClick: () -> Unit, sortCallback: () -> Unit) {
             ) {
                 context.startActivity(Intent(context, SettingsActivity::class.java))
             }
-        }
+        },
+        scrollBehavior = scrollBehavior
     )
 }
 
@@ -223,8 +279,9 @@ fun Searchbar(viewModel: FileListViewModel) {
                 keyboardActions = KeyboardActions(onAny = { focusCancel() }),
                 singleLine = true,
                 placeholder = { Text(text = "Search") },
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = Color.Transparent,
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
@@ -243,7 +300,7 @@ fun Searchbar(viewModel: FileListViewModel) {
                 },
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = ""
                 )
             }
@@ -317,34 +374,12 @@ fun ToolbarItem(imageVector: ImageVector, title: String, onClick: () -> Unit) {
     }
 }
 
-@ExperimentalMaterialApi
-@Composable
-fun ModalBottomSheetLayout(
-    sheetState: ModalBottomSheetState,
-    sheetContent: @Composable () -> Unit,
-    content: @Composable () -> Unit
-) {
-    val scrimColor = if (!isSystemInDarkTheme()) {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
-    } else {
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-    }
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        sheetShape = RoundedCornerShape(8.dp),
-        scrimColor = scrimColor,
-        sheetContent = { sheetContent() }) {
-        content()
-    }
-}
-
 @Composable
 fun FileListView(
     viewModel: FileListViewModel,
     bottomSheetCallback: (SFile) -> Unit,
     handleFile: (SFile) -> Unit,
 ) {
-
     val fileList = viewModel.fileList
     if (viewModel.loading) {
         CircularProgressIndicator(
@@ -360,9 +395,6 @@ fun FileListView(
             selectedFileList = viewModel.selectedFileList,
             bottomSheetCallback = bottomSheetCallback,
             curState = viewModel.curState,
-            onLongClick = { selected, sFile ->
-                viewModel.onSelect(selected, sFile)
-            },
             onClick = { sFile, selected, index, offset ->
                 if (viewModel.inActionMode()) {
                     viewModel.onSelect(selected, sFile)
@@ -376,6 +408,9 @@ fun FileListView(
                         handleFile(sFile)
                     }
                 }
+            },
+            onLongClick = { selected, sFile ->
+                viewModel.onSelect(selected, sFile)
             }
         )
     }
@@ -408,13 +443,6 @@ fun FileListViewContent(
     ) {
         LazyColumn(
             state = lazyListState,
-            contentPadding = rememberInsetsPaddingValues(
-                insets = LocalWindowInsets.current.navigationBars,
-                applyStart = false,
-                applyEnd = false,
-                additionalTop = 8.dp,
-                additionalBottom = 88.dp
-            ),
             modifier = Modifier.fillMaxSize()
         ) {
             //item { ListHeader(showSystem, onShowSystem) }
@@ -449,7 +477,6 @@ fun FileListViewContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateDirectory(
     title: String,
@@ -480,12 +507,13 @@ fun CreateDirectory(
             }
         }) {
         Column(modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
-            Title {
-                Text(
-                    text = title,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 16.dp)
-                )
-            }
+            Text(
+                text = title,
+                modifier = Modifier.padding(start = 4.dp, bottom = 16.dp),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
             OutlinedTextField(
                 value = fieldValue,
                 onValueChange = {

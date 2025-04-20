@@ -5,26 +5,26 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.material.MaterialTheme
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import coil.Coil
+import coil.ComponentRegistry
 import coil.ImageLoader
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.karthek.android.s.files2.helpers.FileIconFetcher
 import com.karthek.android.s.files2.helpers.FileType
 import com.karthek.android.s.files2.helpers.SFile
@@ -32,7 +32,6 @@ import com.karthek.android.s.files2.providers.FileProvider.Companion.MIME_TYPE_K
 import com.karthek.android.s.files2.ui.screens.FileListScreen
 import com.karthek.android.s.files2.ui.screens.Perms
 import com.karthek.android.s.files2.ui.theme.AppTheme
-import com.karthek.android.s.files2.ui.theme.FilesTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import javax.inject.Inject
@@ -49,9 +48,9 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         Coil.setImageLoader {
             ImageLoader.Builder(this)
-                .componentRegistry {
-                    add(FileIconFetcher(fileType))
-                }
+                .components(fun ComponentRegistry.Builder.() {
+                    add(FileIconFetcher.Factory(fileType))
+                })
                 .build()
         }
         setContent { ActivityContent() }
@@ -60,27 +59,18 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ActivityContent() {
         AppTheme {
-            FilesTheme {
-                val systemUiController = rememberSystemUiController()
-                val useDarkIcons = MaterialTheme.colors.isLight
-                SideEffect {
-                    systemUiController.setSystemBarsColor(Color.Transparent, useDarkIcons)
-                }
-                ProvideWindowInsets {
-                    Surface(color = MaterialTheme.colors.background) {
-                        Perms(navigateToSettingsScreen = {
-                            startActivity(
-                                Intent(
-                                    ACTION_APPLICATION_DETAILS_SETTINGS,
-                                    Uri.parse("package:${BuildConfig.APPLICATION_ID}")
-                                )
-                            )
-                        }) {
-                            FileListScreen(
-                                handleFile = ::handleFile,
-                            )
-                        }
-                    }
+            Surface(modifier = Modifier.fillMaxSize()) {
+                Perms(navigateToSettingsScreen = {
+                    startActivity(
+                        Intent(
+                            ACTION_APPLICATION_DETAILS_SETTINGS,
+                            "package:${BuildConfig.APPLICATION_ID}".toUri()
+                        )
+                    )
+                }) {
+                    FileListScreen(
+                        handleFile = ::handleFile,
+                    )
                 }
             }
         }

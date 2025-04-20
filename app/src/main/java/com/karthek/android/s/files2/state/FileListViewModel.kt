@@ -20,13 +20,22 @@ import com.karthek.android.s.files2.FileOpsHandler
 import com.karthek.android.s.files2.helpers.FileType
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.helpers.getComparator
-import com.karthek.android.s.files2.ops.*
+import com.karthek.android.s.files2.ops.DeleteWorker
+import com.karthek.android.s.files2.ops.KEY_DEL
+import com.karthek.android.s.files2.ops.KEY_ORG
+import com.karthek.android.s.files2.ops.KEY_SOURCE
+import com.karthek.android.s.files2.ops.KEY_TARGET
+import com.karthek.android.s.files2.ops.PasteWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Stack
 import javax.inject.Inject
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectory
@@ -40,7 +49,7 @@ class FileListViewModel @Inject constructor(
     val fileType: FileType
 ) : ViewModel(),
     FileOpsHandler {
-    private var cwd: File = Environment.getExternalStorageDirectory()
+    var cwd: File = Environment.getExternalStorageDirectory()
     var selectedFile: SFile? by mutableStateOf(null)
     var nest by mutableStateOf(0)
     val fileList = mutableStateListOf<SFile>()

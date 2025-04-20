@@ -11,11 +11,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.navigationBarsPadding
 import com.karthek.android.s.files2.state.FileListViewModel
 
 @Composable
@@ -23,7 +23,6 @@ fun PrefsBottomSheet(viewModel: FileListViewModel) {
 
     Column(
         modifier = Modifier
-            .navigationBarsPadding()
             .padding(8.dp)
     ) {
         PrefsItemHeader(text = "GENERAL")
@@ -80,7 +79,7 @@ fun PrefsItem(
             color = color,
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically)
         )
         content()
     }
