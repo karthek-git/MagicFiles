@@ -11,10 +11,12 @@ import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -30,6 +32,7 @@ import com.karthek.android.s.files2.helpers.FileType
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.helpers.SFileIconKeyer
 import com.karthek.android.s.files2.providers.FileProvider.Companion.MIME_TYPE_KEY
+import com.karthek.android.s.files2.ui.components.ScaleIndication
 import com.karthek.android.s.files2.ui.screens.FileListScreen
 import com.karthek.android.s.files2.ui.screens.Perms
 import com.karthek.android.s.files2.ui.theme.AppTheme
@@ -62,17 +65,19 @@ class MainActivity : ComponentActivity() {
     fun ActivityContent() {
         AppTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
-                Perms(navigateToSettingsScreen = {
-                    startActivity(
-                        Intent(
-                            ACTION_APPLICATION_DETAILS_SETTINGS,
-                            "package:${BuildConfig.APPLICATION_ID}".toUri()
+                CompositionLocalProvider(LocalIndication provides ScaleIndication) {
+                    Perms(navigateToSettingsScreen = {
+                        startActivity(
+                            Intent(
+                                ACTION_APPLICATION_DETAILS_SETTINGS,
+                                "package:${BuildConfig.APPLICATION_ID}".toUri()
+                            )
                         )
-                    )
-                }) {
-                    FileListScreen(
-                        handleFile = ::handleFile,
-                    )
+                    }) {
+                        FileListScreen(
+                            handleFile = ::handleFile,
+                        )
+                    }
                 }
             }
         }

@@ -51,7 +51,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -105,11 +107,16 @@ fun FileViewItem(
     }
     val bgColor =
         if (selected) MaterialTheme.colorScheme.primary.copy(0.33f) else Color.Transparent
+    val haptics = LocalHapticFeedback.current
+
     Row(
         modifier = Modifier
             .background(bgColor)
             .combinedClickable(
-                onLongClick = { bottomSheetCallback(sFile) },
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    bottomSheetCallback(sFile)
+                },
                 onClick = { onClick(sFile) })
             .padding(10.dp)
     ) {
