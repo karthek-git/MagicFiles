@@ -26,6 +26,7 @@ private class ScaleNode(private val interactionSource: InteractionSource) :
     }
 
     private suspend fun animateToResting() {
+        animatedScalePercent.animateTo(0.97f, spring())
         animatedScalePercent.animateTo(1f, spring())
     }
 

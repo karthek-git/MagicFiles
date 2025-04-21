@@ -69,6 +69,7 @@ import com.karthek.android.s.files2.BuildConfig
 import com.karthek.android.s.files2.FileOpsHandler
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.state.FileListViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -108,6 +109,7 @@ fun FileViewItem(
     val bgColor =
         if (selected) MaterialTheme.colorScheme.primary.copy(0.33f) else Color.Transparent
     val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
 
     Row(
         modifier = Modifier
@@ -117,7 +119,13 @@ fun FileViewItem(
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     bottomSheetCallback(sFile)
                 },
-                onClick = { onClick(sFile) })
+                onClick = {
+                    scope.launch {
+                        delay(100)
+                        onClick(sFile)
+                    }
+                }
+            )
             .padding(10.dp)
     ) {
         //var checked by app.isSelected
