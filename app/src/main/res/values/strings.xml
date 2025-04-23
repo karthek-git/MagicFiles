@@ -54,4 +54,5 @@
         <item quantity="one">%d directory, %d file, %s</item>
         <item quantity="other">%d directories, %d files, %s</item>
     </plurals>
+    <string name="title_activity_file_info">File Preview</string>
 </resources>

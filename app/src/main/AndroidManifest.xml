@@ -29,6 +29,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -38,6 +39,7 @@
             android:label="@string/title_activity_settings">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -45,6 +47,20 @@
             android:name=".LicensesActivity"
             android:exported="true"
             android:label="@string/title_activity_licenses" />
+        <activity
+            android:name=".FileInfoActivity"
+            android:exported="true"
+            android:label="@string/title_activity_file_info"
+            android:theme="@style/Theme.Files.BottomSheet" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <data android:scheme="content" />
+                <data android:mimeType="*/*" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <provider
             android:name=".providers.FileProvider"

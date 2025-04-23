@@ -90,6 +90,7 @@ fun ActionItem(imageVector: ImageVector, contentDescription: String, onClick: ()
 fun FileViewItem(
     sFile: SFile,
     selected: Boolean,
+    modifier: Modifier,
     onClick: (SFile) -> Unit,
     onLongClick: (SFile) -> Unit,
     bottomSheetCallback: (SFile) -> Unit
@@ -112,7 +113,7 @@ fun FileViewItem(
     val scope = rememberCoroutineScope()
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .background(bgColor)
             .combinedClickable(
                 onLongClick = {

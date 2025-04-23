@@ -24,8 +24,13 @@ class FileType @Inject constructor(application: Application) {
 
 
     fun getMimeType(fileName: String): String {
-        var mime: String? = null
         val fd: Int = getNativeFD(fileName)
+        return getMimeType(fd)
+    }
+
+    fun getMimeType(fd: Int): String {
+        var mime: String? = null
+
         if (fd != -1) {
             mime = c_magic_descriptor(fd)
         }
@@ -38,8 +43,12 @@ class FileType @Inject constructor(application: Application) {
     }
 
     fun getFileMInfo(filename: String): String {
+        return getFileMInfo(getNativeFD(filename))
+    }
+
+    fun getFileMInfo(fd: Int): String {
         c_magic_setflags(1)
-        val string = c_magic_descriptor(getNativeFD(filename))
+        val string = c_magic_descriptor(fd)
         c_magic_setflags(0)
         return string ?: "data"
     }

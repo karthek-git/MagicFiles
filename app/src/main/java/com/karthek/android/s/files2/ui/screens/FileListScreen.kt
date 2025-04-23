@@ -194,12 +194,17 @@ fun FileListScreen(
                             imageVector = Icons.Outlined.Storage,
                             contentDescription = "",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp, end = 4.dp)
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                top = 12.dp,
+                                bottom = 8.dp,
+                                end = 4.dp
+                            )
                         )
                     },
                     windowInsets = WindowInsets(0, 0, 0, 0),
                     scrollBehavior = pathScrollBehavior,
-                    modifier = Modifier.height(48.dp).padding(start = 8.dp)
+                    modifier = Modifier.height(48.dp)
                 )
             }
         },
@@ -482,11 +487,12 @@ fun FileListViewContent(
                     )
                 }
             }
-            items(fileList) { sFile ->
+            items(fileList, key = { it.file.name }) { sFile ->
                 val selected = selectedFileList.contains(sFile.file.absolutePath)
                 FileViewItem(
                     sFile = sFile,
                     selected = selected,
+                    modifier = Modifier.animateItem(),
                     onClick = {
                         onClick(
                             it,
