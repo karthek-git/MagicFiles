@@ -2,12 +2,13 @@ package com.karthek.android.s.files2.ui.screens
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
+import android.graphics.pdf.PdfRenderer
 import android.media.AudioAttributes
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.Log
 import android.widget.VideoView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -17,9 +18,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +33,8 @@ import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material.icons.outlined.SkipPrevious
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,6 +62,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -69,9 +76,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.karthek.android.s.files2.FileInfoActivity
+import com.karthek.android.s.files2.R
+import com.karthek.android.s.files2.helpers.PDFPageFetcher
 import com.karthek.android.s.files2.ui.components.FileInfoHeaderItem
 import com.karthek.android.s.files2.ui.components.FileInfoItem
+import com.karthek.android.s.files2.ui.components.findOnGooglePlay
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.BufferedReader
@@ -134,11 +145,25 @@ fun FilePreview(fMedia: FileInfoActivity.FMedia, contentPadding: PaddingValues) 
             AudioPlayerComponent(fMedia = fMedia)
         } else if (fMedia.mimeType.startsWith("text/")) {
             TextFilePreviewComponent(fMedia.uri)
+        } else if (fMedia.mimeType == "application/pdf") {
+            PDFFilePreview(fMedia.uri)
         } else {
-            Text(
-                text = "No preview available, See Info Tab for more details",
-                modifier = Modifier
-            )
+            val context = LocalContext.current
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.no_prev),
+                    modifier = Modifier.padding(8.dp)
+                )
+                Button(onClick = { context.opw(fMedia) }) {
+                    Text(text = "Open with")
+                }
+                Button(
+                    onClick = { context.findOnGooglePlay(fMedia.mimeType) },
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text(text = "Search on Google Play")
+                }
+            }
         }
     }
 }
@@ -211,11 +236,9 @@ fun AudioPlayerComponent(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(fMedia) {
-        Log.i("lll", "AudioPlayerComponent: lau")
         viewModel.initMediaPlayer(fMedia)
 
         onDispose {
-            Log.i("lll", "AudioPlayerComponent: dis")
             viewModel.closeMediaPlayer()
         }
     }
@@ -312,29 +335,70 @@ fun AudioPlayerControlButton(imageVector: ImageVector, onClick: () -> Unit) {
     }
 }
 
-
 @Composable
-fun TextFilePreviewComponent(uri: Uri) {
+fun PDFFilePreview(uri: Uri, pdfPreviewViewModel: PDFPreviewViewModel = viewModel()) {
     val context = LocalContext.current
-    Text(
-        text = readTextFromUri(context, uri),
-        fontFamily = FontFamily.Monospace,
-        modifier = Modifier.verticalScroll(rememberScrollState())
-    )
-}
 
-fun readTextFromUri(context: Context, uri: Uri): String {
-    val stringBuilder = StringBuilder()
-    context.contentResolver.openInputStream(uri)?.use { inputStream ->
-        BufferedReader(InputStreamReader(inputStream)).use { reader ->
-            var line: String? = reader.readLine()
-            while (line != null) {
-                stringBuilder.appendLine(line)
-                line = reader.readLine()
+    LaunchedEffect(uri) {
+        pdfPreviewViewModel.initPDFRenderer(context, uri)
+    }
+
+    if (pdfPreviewViewModel.loading) {
+        ContentLoading()
+    } else {
+        LazyColumn {
+            items(pdfPreviewViewModel.nPages) { i ->
+                PageView(
+                    model = ImageRequest.Builder(context)
+                        .fetcherFactory(pdfPreviewViewModel.fetcherFactory)
+                        .memoryCacheKey(i.toString() + uri.path)
+                        .data(i)
+                        .build()
+                )
             }
         }
     }
-    return stringBuilder.toString()
+}
+
+@Composable
+fun PageView(model: ImageRequest) {
+    AsyncImage(
+        model = model,
+        contentDescription = "",
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .heightIn(max = 460.dp)
+    )
+}
+
+
+@Composable
+fun TextFilePreviewComponent(uri: Uri, viewModel: TextFilePreviewViewModel = viewModel()) {
+    LaunchedEffect(uri) {
+        viewModel.readTextFromUri(uri)
+    }
+
+    if (viewModel.loading) {
+        ContentLoading()
+    } else {
+        Text(
+            text = viewModel.text,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier.verticalScroll(rememberScrollState())
+        )
+    }
+}
+
+@Composable
+fun ContentLoading(modifier: Modifier = Modifier) {
+    CircularProgressIndicator(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 48.dp)
+            .size(64.dp)
+            .wrapContentSize(Alignment.Center),
+        strokeWidth = 4.dp
+    )
 }
 
 @HiltViewModel
@@ -394,4 +458,67 @@ class AudioPlayerViewModel @Inject constructor(private val application: Applicat
         mediaPlayer.release()
     }
 
+}
+
+
+class PDFPreviewViewModel : ViewModel() {
+
+    lateinit var pdfRenderer: PdfRenderer
+    var nPages: Int = 0
+    var loading by mutableStateOf(true)
+    lateinit var fetcherFactory: PDFPageFetcher.Factory
+    lateinit var key: String
+
+    fun initPDFRenderer(context: Context, uri: Uri) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val fd = context.contentResolver.openFileDescriptor(uri, "r")!!
+            pdfRenderer = PdfRenderer(fd)
+            nPages = pdfRenderer.pageCount
+            fetcherFactory = PDFPageFetcher.Factory(pdfRenderer)
+            key = uri.path ?: uri.toString()
+            loading = false
+        }
+    }
+}
+
+
+@HiltViewModel
+class TextFilePreviewViewModel @Inject constructor(private val application: Application) :
+    ViewModel() {
+
+    lateinit var text: String
+    var loading by mutableStateOf(true)
+
+    fun readTextFromUri(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val stringBuilder = StringBuilder()
+            application.contentResolver.openInputStream(uri)?.use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    var line: String? = reader.readLine()
+                    var nLines = 0
+                    while (line != null && nLines <= MAX_LINES_READ) {
+                        stringBuilder.appendLine(line)
+                        line = reader.readLine()
+                        nLines++
+                    }
+                    if (nLines > MAX_LINES_READ) {
+                        stringBuilder.appendLine("...")
+                    }
+                }
+            }
+            text = stringBuilder.toString()
+            loading = false
+        }
+    }
+
+    companion object {
+        const val MAX_LINES_READ = 1000
+    }
+}
+
+private fun Context.opw(fMedia: FileInfoActivity.FMedia) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.setDataAndTypeAndNormalize(fMedia.uri, fMedia.mimeType)
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    startActivity(Intent.createChooser(intent, fMedia.name))
 }

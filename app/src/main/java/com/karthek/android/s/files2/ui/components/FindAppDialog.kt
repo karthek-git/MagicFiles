@@ -2,7 +2,6 @@ package com.karthek.android.s.files2.ui.components
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.karthek.android.s.files2.R
 
 
@@ -35,7 +35,7 @@ fun FindAppDialog(onDismissCallback: () -> Unit, onFindCallback: () -> Unit) {
 
 fun Context.findOnGooglePlay(mimeType: String) {
     val intent = Intent(Intent.ACTION_VIEW)
-    intent.data = Uri.parse("http://play.google.com/store/search?q=$mimeType&c=apps")
+    intent.data = "http://play.google.com/store/search?q=$mimeType&c=apps".toUri()
     intent.setPackage("com.android.vending")
     startActivity(intent)
 }

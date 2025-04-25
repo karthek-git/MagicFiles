@@ -55,4 +55,5 @@
         <item quantity="other">%d directories, %d files, %s</item>
     </plurals>
     <string name="title_activity_file_info">File Preview</string>
+    <string name="no_prev">No preview available, You can try opening the file with other apps or search Google Play for apps which can open this file. See Info Tab for more details</string>
 </resources>

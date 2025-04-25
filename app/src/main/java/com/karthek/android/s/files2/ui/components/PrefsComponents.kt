@@ -3,7 +3,10 @@ package com.karthek.android.s.files2.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Icon
@@ -23,7 +26,9 @@ fun PrefsBottomSheet(viewModel: FileListViewModel) {
 
     Column(
         modifier = Modifier
+            .navigationBarsPadding()
             .padding(8.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         PrefsItemHeader(text = "GENERAL")
         PrefsItem(text = "Show hidden files") {
@@ -55,7 +60,8 @@ fun PrefsItemHeader(text: String) {
 @Composable
 fun SortItem(text: String, index: Int, viewModel: FileListViewModel) {
     val selected = viewModel.sortPreference == index
-    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    val color =
+        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
     PrefsItem(
         text = text,
         color = color,
@@ -79,7 +85,9 @@ fun PrefsItem(
             color = color,
             fontWeight = FontWeight.SemiBold,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f).align(Alignment.CenterVertically)
+            modifier = Modifier
+                .weight(1f)
+                .align(Alignment.CenterVertically)
         )
         content()
     }
