@@ -5,7 +5,14 @@ import android.os.ParcelFileDescriptor
 import android.text.format.Formatter.formatFileSize
 import android.webkit.MimeTypeMap
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.Android
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Audiotrack
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.InsertDriveFile
+import androidx.compose.material.icons.outlined.Movie
+import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.karthek.android.s.files2.R
@@ -73,8 +80,54 @@ data class SFile(
             mimeType!!.startsWith("video/") -> SFileIcon.VIDEO
             mimeType!! == "application/vnd.android.package-archive" -> SFileIcon.APK
             mimeType!! == "application/pdf" -> SFileIcon.PDF
+            isArchive -> SFileIcon.ARCHIVE
             else -> SFileIcon.File
         }
+    }
+
+    val isArchive by lazy {
+        arrayOf(
+            "application/x-xz",
+            "application/gzip",
+            "application/gzip-compressed",
+            "application/gzipped",
+            "application/gunzip",
+            "application/x-gzip",
+            "application/x-gzip-compressed",
+            "gzip/document",
+            "application/vnd.debian.binary-package",
+            "application/x-deb",
+            "application/x-debian-package",
+            "application/zip",
+            "application/x-zip-compressed",
+            "application/x-bzip2",
+            "application/x-bzip",
+            "application/x-lz4",
+            "application/vnd.android.package-archive",
+            "application/java-archive",
+            "application/x-7z-compressed",
+            "application/rar",
+            "application/vnd.rar",
+            "application/x-rar",
+            "application/x-rar-compressed",
+            "application/x-lzip",
+            "application/x-lzma",
+            "application/zstd",
+            "application/zlib",
+            "application/x-deflate",
+            "application/x-tar",
+            "application/x-gtar",
+            "application/x-compress",
+            "application/x-compressed",
+            "application/x-compressed-tar",
+            "application/x-cpio",
+            "application/x-archive",
+            "application/x-xar",
+            "application/x-iso9660-image",
+            "application/vnd.ms-cab-compressed",
+            "application/x-lzh",
+            "application/x-lzh-compressed"
+        ).contains(mimeType)
     }
 
     fun dSizeCal(context: Context): Flow<String> {

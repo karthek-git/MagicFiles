@@ -27,6 +27,7 @@ import androidx.core.view.WindowCompat
 import coil.Coil
 import coil.ComponentRegistry
 import coil.ImageLoader
+import com.google.android.gms.ads.MobileAds
 import com.karthek.android.s.files2.helpers.FileIconFetcher
 import com.karthek.android.s.files2.helpers.FileType
 import com.karthek.android.s.files2.helpers.SFile
@@ -34,10 +35,14 @@ import com.karthek.android.s.files2.helpers.SFileIconKeyer
 import com.karthek.android.s.files2.providers.FileProvider.Companion.MIME_TYPE_KEY
 import com.karthek.android.s.files2.ui.components.ScaleIndication
 import com.karthek.android.s.files2.ui.screens.FileListScreen
+import com.karthek.android.s.files2.ui.screens.MainScreen
 import com.karthek.android.s.files2.ui.screens.Perms
 import com.karthek.android.s.files2.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -59,6 +64,11 @@ class MainActivity : ComponentActivity() {
                 .build()
         }
         setContent { ActivityContent() }
+
+        val backgroundScope = CoroutineScope(Dispatchers.IO)
+        backgroundScope.launch {
+            MobileAds.initialize(this@MainActivity) {}
+        }
     }
 
     @Composable
@@ -74,9 +84,8 @@ class MainActivity : ComponentActivity() {
                             )
                         )
                     }) {
-                        FileListScreen(
-                            handleFile = ::handleFile,
-                        )
+                        MainScreen(handleFile = ::handleFile)
+                        //FileListScreen(handleFile = ::handleFile, onMoreClick = {})
                     }
                 }
             }

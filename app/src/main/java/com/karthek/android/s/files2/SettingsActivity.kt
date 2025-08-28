@@ -1,57 +1,69 @@
 package com.karthek.android.s.files2
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.core.view.WindowCompat
 import com.karthek.android.s.files2.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
         setContent { ScreenContent() }
     }
 
@@ -59,62 +71,78 @@ class SettingsActivity : ComponentActivity() {
     fun ScreenContent() {
         AppTheme {
             Surface {
-                val version = remember { getVersionString() }
-                SettingsScreen(version)
-            }
-        }
-    }
-
-    private fun getVersionString(): String {
-        return "${BuildConfig.VERSION_NAME}-${BuildConfig.BUILD_TYPE} (${BuildConfig.VERSION_CODE})"
-    }
-
-    private fun startLicensesActivity() {
-        startActivity(Intent(this, LicensesActivity::class.java))
-    }
-
-    @Composable
-    fun SettingsScreen(version: String) {
-        CommonScaffold(activity = this, name = "About") { paddingValues ->
-            Column(modifier = Modifier.padding(paddingValues)) {
-                ListItem(
-                    headlineContent = { Text(text = "Version") },
-                    supportingContent = { Text(text = version, fontWeight = FontWeight.Light) }
-                )
-                HorizontalDivider()
-                ListItem(
-                    headlineContent = { Text(text = "Privacy Policy") },
-                    modifier = Modifier.clickable {
-                        val uri =
-                            "https://policies.karthek.com/MagicFiles/-/blob/master/privacy.md".toUri()
-                        startActivity(Intent(Intent.ACTION_VIEW, uri))
+                SettingsScreen(
+                    onBackClick = { this.finish() },
+                    onLicensesClick = {
+                        startActivity(Intent(this, LicensesActivity::class.java))
                     })
-                HorizontalDivider()
-                ListItem(
-                    headlineContent = { Text(text = "Open source licenses") },
-                    modifier = Modifier.clickable { startLicensesActivity() }
-                )
-                HorizontalDivider()
-//				LicenseBottomSheet {
-//					val uri = Uri.parse("https://policies.karthek.com/MagicFiles/")
-//					startActivity(Intent(Intent.ACTION_VIEW, uri))
-//				}
             }
         }
     }
 
 }
 
+private fun getAppVersionString(): String {
+    return "${BuildConfig.VERSION_NAME}-${BuildConfig.BUILD_TYPE} (${BuildConfig.VERSION_CODE})"
+}
+
+@Composable
+fun SettingsScreen(
+    onBackClick: () -> Unit,
+    onLicensesClick: () -> Unit,
+) {
+    val context = LocalContext.current
+    CommonScaffold(name = "About", onBackClick = onBackClick) { paddingValues ->
+        ListComponent(
+            modifier = Modifier
+                .consumeWindowInsets(paddingValues)
+                .padding(paddingValues)
+                .fillMaxSize()
+        ) {
+            CardComponent {
+                NavigationListItem(headLineText = "Privacy Policy") {
+                    val uri =
+                        "\"https://policies.karthek.com/MagicFiles/-/blob/master/privacy.md".toUri()
+                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                }
+                HorizontalDivider()
+                NavigationListItem(headLineText = "Open source licenses", onClick = onLicensesClick)
+//                HorizontalDivider()
+//                LicenseBottomSheet(
+//                    "https://www.apache.org/licenses/LICENSE-2.0.txt",
+//                    "Apache-2.0"
+//                )
+                HorizontalDivider()
+                NavigationListItem(
+                    headLineText = "Version",
+                    supportingText = getAppVersionString()
+                ) {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data =
+                            "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}".toUri()
+                        setPackage("com.android.vending")
+                    }
+                    context.startActivity(intent)
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommonScaffold(activity: Activity, name: String, content: @Composable (PaddingValues) -> Unit) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+fun CommonScaffold(
+    name: String,
+    onBackClick: () -> Unit,
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = { Text(text = name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    IconButton(onClick = { activity.finish() }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = ""
@@ -131,54 +159,127 @@ fun CommonScaffold(activity: Activity, name: String, content: @Composable (Paddi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LicenseBottomSheet(onClick: () -> Unit) {
+fun LicenseBottomSheet(url: String, urlText: String) {
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
 
-    ListItem(
-        headlineContent = { Text(text = "Legal") },
-        modifier = Modifier.clickable { openBottomSheet = true }
-    )
+    NavigationListItem(headLineText = "Legal") { openBottomSheet = true }
 
     if (openBottomSheet) {
-        ModalBottomSheetLayout(
-            onDismissRequest = { openBottomSheet = false },
-            sheetState = sheetState
-        ) {
-            LicenseText(onClick)
+        ModalBottomSheet(onDismissRequest = { openBottomSheet = false }) {
+            LicenseText(url, urlText)
         }
     }
 }
 
 @Composable
-fun LicenseText(onClick: () -> Unit) {
+fun LicenseText(url: String, urlText: String) {
     val annotatedLicenseText = buildAnnotatedString {
-        val baseStyle = SpanStyle(color = MaterialTheme.colorScheme.onSurface)
-        withStyle(style = baseStyle) {
-            append("Copyright © Karthik Alapati\n\n")
-            append("This application comes with absolutely no warranty. See the")
+        append("Copyright © Karthik Alapati\n\n")
+        append("This application comes with absolutely no warranty. See the ")
+
+        withLink(
+            LinkAnnotation.Url(
+                url,
+                TextLinkStyles(
+                    style = SpanStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline
+                    )
+                )
+            )
+        ) {
+            append(urlText)
         }
 
-        pushStringAnnotation(tag = "lic3", annotation = "link")
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-            append(" License ")
-        }
-        pop()
-
-        withStyle(style = baseStyle) {
-            append("for details.")
-        }
+        append(" License for details.")
     }
-    ClickableText(
+    Text(
         text = annotatedLicenseText,
         style = MaterialTheme.typography.labelLarge,
-        onClick = { onClick() },
         modifier = Modifier
-			.padding(16.dp)
-			.padding(bottom = 16.dp)
+            .padding(16.dp)
+            .padding(bottom = 16.dp)
     )
 }
 
+@Composable
+fun NavigationListItem(
+    headLineText: String,
+    supportingText: String? = null,
+    icon: ImageVector? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    var modifier = onClick?.let {
+        Modifier.combinedClickable(
+            onClick = it,
+            onLongClick = {})
+    } ?: Modifier
+
+    Row(
+        modifier = modifier
+            .padding(vertical = 16.dp, horizontal = 8.dp)
+    ) {
+        icon?.let {
+            Icon(
+                imageVector = it,
+                contentDescription = headLineText,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+        Column(
+            Modifier
+                .weight(1f)
+                .align(Alignment.CenterVertically)
+                .padding(horizontal = 8.dp)
+        ) {
+            Text(
+                text = headLineText,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            supportingText?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier
+                        .alpha(0.7f)
+                        .padding(start = 1.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        onClick?.let {
+            Icon(
+                Icons.Outlined.ChevronRight,
+                contentDescription = "",
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .align(Alignment.CenterVertically),
+            )
+        }
+    }
+}
+
+@Composable
+fun ListComponent(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = modifier.verticalScroll(rememberScrollState()), content = content)
+}
+
+@Composable
+fun CardComponent(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp) // todo(temp fix for compose m3 car elevation color issue)
+        ),
+        elevation = CardDefaults.cardElevation(4.dp),
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        content = content
+    )
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModalBottomSheetLayout(
@@ -191,6 +292,7 @@ fun ModalBottomSheetLayout(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         content = { sheetContent() }
     )

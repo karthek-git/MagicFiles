@@ -68,3 +68,4 @@ abstract class OpsWorker(context: Context, workerParameters: WorkerParameters) :
 
 const val NOTIFICATION_ID_PASTE = 1
 const val NOTIFICATION_ID_DELETE = 2
+const val NOTIFICATION_ID_EXTRACT = 3

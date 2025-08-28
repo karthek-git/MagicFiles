@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Delete
@@ -225,6 +226,12 @@ fun OpsBottomSheet(
                 viewModel.selectedFile?.let { context.share(it) }
                 onOptionSelect()
             }
+            if (viewModel.selectedFile?.isArchive == true) {
+                OpsItem(icon = Icons.Outlined.Archive, text = "Extract") {
+                    onOptionSelect()
+                    viewModel.onExtractClick()
+                }
+            }
         }
         OpsItem(icon = Icons.Outlined.Info, text = "Info") {
             onOptionSelect()
@@ -308,7 +315,13 @@ fun Dialog(
 }
 
 @Composable
-fun AddFab(showPaste: Boolean, onPasteClick: () -> Unit, onClick: () -> Unit) {
+fun AddFab(
+    showPaste: Boolean,
+    onPasteClick: () -> Unit,
+    showExtractHere: Boolean,
+    onExtractHereClick: () -> Unit,
+    onClick: () -> Unit
+) {
     val coroutineScope = rememberCoroutineScope()
     val scale = remember { Animatable(initialValue = 1f) }
     Column(
@@ -316,8 +329,23 @@ fun AddFab(showPaste: Boolean, onPasteClick: () -> Unit, onClick: () -> Unit) {
             .navigationBarsPadding()
             .padding(end = 8.dp)
     ) {
+        AnimatedVisibility(showExtractHere) {
+            FloatingActionButton(
+                onClick = onExtractHereClick,
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Archive,
+                    contentDescription = "extract archive file",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        }
         AnimatedVisibility(showPaste) {
-            FloatingActionButton(onClick = onPasteClick) {
+            FloatingActionButton(
+                onClick = onPasteClick,
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Outlined.ContentPaste,
                     contentDescription = "paste",
@@ -334,7 +362,7 @@ fun AddFab(showPaste: Boolean, onPasteClick: () -> Unit, onClick: () -> Unit) {
                 }
             },
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = 8.dp)
                 .scale(scale.value)
         ) {
             Icon(

@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Environment
 import android.os.FileObserver
 import android.provider.MediaStore
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -22,6 +23,7 @@ import com.karthek.android.s.files2.helpers.FileType
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.helpers.getComparator
 import com.karthek.android.s.files2.ops.DeleteWorker
+import com.karthek.android.s.files2.ops.FileExtractWorker
 import com.karthek.android.s.files2.ops.KEY_DEL
 import com.karthek.android.s.files2.ops.KEY_ORG
 import com.karthek.android.s.files2.ops.KEY_SOURCE
@@ -51,6 +53,7 @@ class FileListViewModel @Inject constructor(
 ) : ViewModel(),
     FileOpsHandler {
     var cwd: File = Environment.getExternalStorageDirectory()
+    var crumbPath by mutableStateOf(cwd.path)
     var selectedFile: SFile? by mutableStateOf(null)
     var nest by mutableIntStateOf(0)
     val fileList = mutableStateListOf<SFile>()
@@ -72,6 +75,7 @@ class FileListViewModel @Inject constructor(
     private var searchJob: Job? = null
     var clipBoard = mutableStateListOf<String>()
     private var org = true
+    var selectedArchiveFile: String? by mutableStateOf(null)
 
     fun onBackClick() {
         nest--
@@ -81,10 +85,12 @@ class FileListViewModel @Inject constructor(
 
     fun onCurrentDirChange(dir: File) {
         cwd = dir
+        crumbPath = cwd.path
+        Log.i("lll", dir.path)
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             observeChanges()
-            refresh()
+            //refresh()
         }
     }
 
@@ -122,6 +128,7 @@ class FileListViewModel @Inject constructor(
                     event and fileObserverMask != 0 -> viewModelScope.launch(Dispatchers.Main) {
                         delay(150); refresh()
                     }
+
                     else -> null
                 }
             }
@@ -176,6 +183,8 @@ class FileListViewModel @Inject constructor(
         return r
     }
 
+
+
     override fun copy() {
         setClipBoard()
     }
@@ -224,6 +233,22 @@ class FileListViewModel @Inject constructor(
                     KEY_SOURCE to clipBoard.toTypedArray(),
                     KEY_TARGET to cwd.absolutePath,
                     KEY_ORG to org
+                )
+            )
+            .build()
+        WorkManager.getInstance(application).enqueue(workRequest)
+    }
+
+    fun onExtractClick() {
+        selectedArchiveFile = selectedFile?.file?.absolutePath
+    }
+
+    fun extractFile() {
+        val workRequest = OneTimeWorkRequestBuilder<FileExtractWorker>()
+            .setInputData(
+                workDataOf(
+                    KEY_SOURCE to selectedArchiveFile,
+                    KEY_TARGET to cwd.absolutePath
                 )
             )
             .build()
@@ -312,4 +337,18 @@ class FileListViewModel @Inject constructor(
             FileObserver.CREATE or FileObserver.DELETE or FileObserver.MOVED_FROM or FileObserver.MOVED_TO
     }
 
+}
+
+class PFileListViewModel : ViewModel() {
+    val fileList = mutableStateListOf<SFile>()
+    var loading by mutableStateOf(true)
+    var selectedFileList = mutableStateListOf<String>()
+
+
+    init {
+        viewModelScope.launch {
+            //  refresh()
+        }
+        //  observeChanges()
+    }
 }

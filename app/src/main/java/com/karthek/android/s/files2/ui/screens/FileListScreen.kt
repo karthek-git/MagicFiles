@@ -1,13 +1,13 @@
 package com.karthek.android.s.files2.ui.screens
 
 import android.content.ActivityNotFoundException
-import android.content.Intent
+import android.os.Environment
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +61,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -76,12 +77,19 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import com.karthek.android.s.files2.FileOpsHandler
 import com.karthek.android.s.files2.ModalBottomSheetLayout
-import com.karthek.android.s.files2.SettingsActivity
 import com.karthek.android.s.files2.helpers.SFile
 import com.karthek.android.s.files2.state.FileListViewModel
+import com.karthek.android.s.files2.state.FileListViewModel2
 import com.karthek.android.s.files2.ui.components.ActionItem
 import com.karthek.android.s.files2.ui.components.AddFab
 import com.karthek.android.s.files2.ui.components.Crumb
@@ -93,14 +101,18 @@ import com.karthek.android.s.files2.ui.components.OpsBottomSheet
 import com.karthek.android.s.files2.ui.components.PrefsBottomSheet
 import com.karthek.android.s.files2.ui.components.add
 import com.karthek.android.s.files2.ui.components.findOnGooglePlay
+import com.karthek.android.s.files2.ui.screens.navigation.Screen
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileListScreen(
-    viewModel: FileListViewModel = viewModel(),
+    viewModel: FileListViewModel = hiltViewModel(),
     handleFile: (SFile) -> Unit,
+    onMoreClick: () -> Unit,
+    showInterstitialAd: () -> Unit
 ) {
     var openPrefsSheet by rememberSaveable { mutableStateOf(false) }
     val prefsSheetState = rememberModalBottomSheetState()
@@ -111,7 +123,7 @@ fun FileListScreen(
     val scope = rememberCoroutineScope()
     val inActionMode = viewModel.selectedFileList.isNotEmpty()
 
-    BackHandler(viewModel.nest > 0, viewModel::onBackClick)
+    // BackHandler(viewModel.nest > 0, viewModel::onBackClick)
     BackHandler(openPrefsSheet || openOpsSheet) {
         openPrefsSheet = false
         openOpsSheet = false
@@ -170,24 +182,27 @@ fun FileListScreen(
             Column {
                 when {
                     inActionMode -> {
-                        TopActionBar(viewModel.selectedFileList.size) { viewModel.clearActionMode() }
+                        TopActionBar(viewModel.selectedFileList.size, pathScrollBehavior) {
+                            viewModel.clearActionMode()
+                        }
                     }
 
                     viewModel.inSearchMode -> {
-                        Searchbar(viewModel = viewModel)
+                        Searchbar(viewModel = viewModel, scrollBehavior = pathScrollBehavior)
                     }
 
                     else -> {
                         TopAppBar(
                             onSearchClick = { viewModel.inSearchMode = true },
                             sortCallback = { openPrefsSheet = true },
-                            scrollBehavior = scrollBehavior
+                            scrollBehavior = scrollBehavior,
+                            onMoreClick = onMoreClick
                         )
                     }
                 }
                 TopAppBar(
                     title = {
-                        Crumb(path = viewModel.cwd)
+                        Crumb(path = viewModel.crumbPath)
                     },
                     navigationIcon = {
                         Icon(
@@ -212,7 +227,9 @@ fun FileListScreen(
             if (!inActionMode && !viewModel.inSearchMode) {
                 AddFab(
                     showPaste = viewModel.clipBoard.isNotEmpty(),
-                    onPasteClick = viewModel::paste
+                    onPasteClick = viewModel::paste,
+                    showExtractHere = viewModel.selectedArchiveFile != null,
+                    onExtractHereClick = viewModel::extractFile
                 ) { viewModel.showEditDialog = true }
             }
         },
@@ -224,7 +241,7 @@ fun FileListScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             FileListView(
-                viewModel = viewModel,
+                gViewModel = viewModel,
                 bottomSheetCallback = {
                     scope.launch {
                         viewModel.selectedFile = it
@@ -239,6 +256,7 @@ fun FileListScreen(
                         viewModel.showFindAppDialog = it.mimeType
                     }
                 },
+                showInterstitialAd = showInterstitialAd
             )
             if (inActionMode)
                 ActionToolbar(
@@ -254,7 +272,8 @@ fun FileListScreen(
 fun TopAppBar(
     onSearchClick: () -> Unit,
     sortCallback: () -> Unit,
-    scrollBehavior: TopAppBarScrollBehavior
+    scrollBehavior: TopAppBarScrollBehavior,
+    onMoreClick: () -> Unit
 ) {
 
     TopAppBar(
@@ -279,10 +298,9 @@ fun TopAppBar(
             val context = LocalContext.current
             ActionItem(
                 imageVector = Icons.Outlined.MoreVert,
-                contentDescription = ""
-            ) {
-                context.startActivity(Intent(context, SettingsActivity::class.java))
-            }
+                contentDescription = "",
+                onClick = onMoreClick
+            )
         },
         scrollBehavior = scrollBehavior
     )
@@ -290,7 +308,7 @@ fun TopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Searchbar(viewModel: FileListViewModel) {
+fun Searchbar(viewModel: FileListViewModel, scrollBehavior: TopAppBarScrollBehavior) {
     val textInputService = LocalTextInputService.current
     val focusHandler = LocalFocusManager.current
     val focusCancel = {
@@ -342,14 +360,15 @@ fun Searchbar(viewModel: FileListViewModel) {
                     )
                 }
             }
-        }
+        },
+        scrollBehavior = scrollBehavior
     )
 }
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopActionBar(num: Int, callback: () -> Unit) {
+fun TopActionBar(num: Int, scrollBehavior: TopAppBarScrollBehavior, callback: () -> Unit) {
     TopAppBar(
         title = {
             Text(
@@ -365,7 +384,8 @@ fun TopActionBar(num: Int, callback: () -> Unit) {
                     contentDescription = ""
                 )
             }
-        }
+        },
+        scrollBehavior = scrollBehavior
     )
 }
 
@@ -403,51 +423,88 @@ fun ToolbarItem(imageVector: ImageVector, title: String, onClick: () -> Unit) {
 
 @Composable
 fun FileListView(
-    viewModel: FileListViewModel,
+    gViewModel: FileListViewModel,
     paddingValues: PaddingValues,
     bottomSheetCallback: (SFile) -> Unit,
     handleFile: (SFile) -> Unit,
+    showInterstitialAd: () -> Unit,
 ) {
-    val fileList = viewModel.fileList
-    if (viewModel.loading) {
-        CircularProgressIndicator(
-            modifier = Modifier
-                .fillMaxSize()
-                .size(64.dp)
-                .wrapContentSize(Alignment.Center),
-            strokeWidth = 4.dp
-        )
-    } else {
-        FileListViewContent(
-            fileList = fileList,
-            selectedFileList = viewModel.selectedFileList,
-            paddingValues = paddingValues,
-            bottomSheetCallback = bottomSheetCallback,
-            curState = viewModel.curState,
-            onClick = { sFile, selected, index, offset ->
-                if (viewModel.inActionMode()) {
-                    viewModel.onSelect(selected, sFile)
-                } else {
-                    if (sFile.isDir) {
-                        viewModel.nest++
-                        viewModel.curState = null
-                        viewModel.backStack.push(intArrayOf(index, offset))
-                        viewModel.onCurrentDirChange(sFile.file)
-                    } else {
-                        handleFile(sFile)
-                    }
-                }
-            },
-            onLongClick = { selected, sFile ->
-                viewModel.onSelect(selected, sFile)
+    val backStack =
+        rememberNavBackStack(Screen.PathScreen(Environment.getExternalStorageDirectory().path))
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = {
+            repeat(it) {
+                backStack.removeAt(backStack.lastIndex)
+                val path = (backStack.last() as Screen.PathScreen).path
+                gViewModel.onCurrentDirChange(File(path))
             }
-        )
-    }
+        },
+        entryDecorators = listOf(
+            rememberSceneSetupNavEntryDecorator(),
+            rememberSavedStateNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
+        transitionSpec = {
+            slideInHorizontally(animationSpec = tween(500), initialOffsetX = { it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { -it })
+        },
+        popTransitionSpec = {
+            slideInHorizontally(animationSpec = tween(500), initialOffsetX = { -it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { it })
+        },
+        predictivePopTransitionSpec = {
+            slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { it })
+        },
+        entryProvider = entryProvider {
+            entry<Screen.PathScreen> { path ->
+                val viewModel: FileListViewModel2 =
+                    hiltViewModel<FileListViewModel2, FileListViewModel2.Factory> {
+                        it.create(File(path.path))
+                    }
+                if (viewModel.loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .size(64.dp)
+                            .wrapContentSize(Alignment.Center),
+                        strokeWidth = 4.dp
+                    )
+                } else {
+                    FileListViewContent(
+                        fileList = if (gViewModel.inSearchMode) gViewModel.fileList else viewModel.fileList,
+                        selectedFileList = gViewModel.selectedFileList,
+                        paddingValues = paddingValues,
+                        bottomSheetCallback = bottomSheetCallback,
+                        curState = null,
+                        onClick = { sFile, selected, index, offset ->
+                            if (gViewModel.inActionMode()) {
+                                gViewModel.onSelect(selected, sFile)
+                            } else {
+                                if (sFile.isDir) {
+                                    gViewModel.onCurrentDirChange(sFile.file)
+                                    backStack.add(Screen.PathScreen(sFile.file.absolutePath))
+                                    showInterstitialAd()
+                                } else {
+                                    handleFile(sFile)
+                                }
+                            }
+                        },
+                        onLongClick = { selected, sFile ->
+                            gViewModel.onSelect(selected, sFile)
+                        }
+                    )
+                }
+            }
+        }
+    )
 }
 
 @Composable
 fun FileListViewContent(
-    fileList: List<SFile>,
+    fileList: SnapshotStateList<SFile>,
     selectedFileList: List<String>,
     paddingValues: PaddingValues,
     bottomSheetCallback: (SFile) -> Unit,
@@ -464,49 +521,49 @@ fun FileListViewContent(
         }
     }
     val density = LocalDensity.current
-    AnimatedVisibility(
-        visibleState = animationState,
-        enter = slideInVertically(
-            initialOffsetY = { with(density) { 14.dp.roundToPx() } },
-            animationSpec = tween(durationMillis = 280, easing = LinearEasing)
-        )
+//    AnimatedVisibility(
+//        visibleState = animationState,
+//        enter = slideInVertically(
+//            initialOffsetY = { with(density) { 14.dp.roundToPx() } },
+//            animationSpec = tween(durationMillis = 280, easing = LinearEasing)
+//        )
+//    ) {
+    LazyColumn(
+        state = lazyListState,
+        contentPadding = paddingValues.add(bottom = 64.dp),
+        modifier = Modifier.fillMaxSize()
     ) {
-        LazyColumn(
-            state = lazyListState,
-            contentPadding = paddingValues.add(bottom = 64.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            //item { ListHeader(showSystem, onShowSystem) }
-            if (fileList.isEmpty()) {
-                item {
-                    Text(
-                        text = "Nothing found",
-                        modifier = Modifier
-                            .fillParentMaxSize()
-                            .wrapContentSize(Alignment.Center)
-                    )
-                }
-            }
-            items(fileList, key = { it.file.name }) { sFile ->
-                val selected = selectedFileList.contains(sFile.file.absolutePath)
-                FileViewItem(
-                    sFile = sFile,
-                    selected = selected,
-                    modifier = Modifier.animateItem(),
-                    onClick = {
-                        onClick(
-                            it,
-                            selected,
-                            lazyListState.firstVisibleItemIndex,
-                            lazyListState.firstVisibleItemScrollOffset
-                        )
-                    },
-                    onLongClick = { onLongClick(selected, it) },
-                    bottomSheetCallback = bottomSheetCallback
+        //item { ListHeader(showSystem, onShowSystem) }
+        if (fileList.isEmpty()) {
+            item {
+                Text(
+                    text = "Nothing found",
+                    modifier = Modifier
+                        .fillParentMaxSize()
+                        .wrapContentSize(Alignment.Center)
                 )
             }
         }
+        items(fileList, key = { it.file.name }) { sFile ->
+            val selected = selectedFileList.contains(sFile.file.absolutePath)
+            FileViewItem(
+                sFile = sFile,
+                selected = selected,
+                modifier = Modifier.animateItem(),
+                onClick = {
+                    onClick(
+                        it,
+                        selected,
+                        lazyListState.firstVisibleItemIndex,
+                        lazyListState.firstVisibleItemScrollOffset
+                    )
+                },
+                onLongClick = { onLongClick(selected, it) },
+                bottomSheetCallback = bottomSheetCallback
+            )
+        }
     }
+    // }
 }
 
 @Composable

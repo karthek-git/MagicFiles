@@ -16,16 +16,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 fun Crumb(
-    path: File,
+    path: String,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
     //var pathList = listOf("/", "Downloads", "some1", "some2")
-    val pathList = path.path.split("/")
+    val pathList = path.split("/")
     LazyRow(
         state = lazyListState,
         modifier = Modifier.padding(top = 12.dp, bottom = 8.dp, end = 4.dp),

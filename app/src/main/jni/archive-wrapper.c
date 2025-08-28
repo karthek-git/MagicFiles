@@ -9,7 +9,7 @@ struct archive_entry *entry;
 int r;
 
 JNIEXPORT jlong JNICALL
-Java_com_karthek_android_s_files_helper_FArchive_c_1archive_1list(__unused JNIEnv *env,
+Java_com_karthek_android_s_files2_helpers_FArchive_c_1archive_1list(__unused JNIEnv *env,
                                                                   __unused jclass clazz,
                                                                   jint fd) {
     a = archive_read_new();
@@ -32,7 +32,7 @@ Java_com_karthek_android_s_files_helper_FArchive_c_1archive_1list(__unused JNIEn
 
 
 JNIEXPORT jint JNICALL
-Java_com_karthek_android_s_files_helper_FArchive_c_1archive_1extract(JNIEnv *env,
+Java_com_karthek_android_s_files2_helpers_FArchive_c_1archive_1extract(JNIEnv *env,
                                                                      __unused jclass clazz,
                                                                      jint fd,
                                                                      jstring target) {

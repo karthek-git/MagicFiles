@@ -38,12 +38,12 @@ fun PrefsBottomSheet(viewModel: FileListViewModel) {
             )
         }
         PrefsItemHeader(text = "SORT BY")
-        SortItem(text = "File name (A to Z)", 1, viewModel)
-        SortItem(text = "File name (Z to A)", 2, viewModel)
-        SortItem(text = "Size (smallest first)", 3, viewModel)
-        SortItem(text = "Size (largest first)", 4, viewModel)
-        SortItem(text = "Modified (oldest first)", 5, viewModel)
-        SortItem(text = "Modified (newest first)", 6, viewModel)
+        SortItem(text = "File name (A - Z)", 1, viewModel)
+        SortItem(text = "File name (Z - A)", 2, viewModel)
+        SortItem(text = "Size (Small - Large)", 3, viewModel)
+        SortItem(text = "Size (Large - Small)", 4, viewModel)
+        SortItem(text = "Modified (Old - New)", 5, viewModel)
+        SortItem(text = "Modified (New - Old)", 6, viewModel)
     }
 }
 
